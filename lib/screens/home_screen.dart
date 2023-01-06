@@ -35,13 +35,26 @@ class _HomeScreenState extends State<HomeScreen> {
               scheduleCount: 3,
             ),
             SizedBox(height: 8.0),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: ScheduleCard(
-                startTime: 8,
-                endTime: 9,
-                content: '프로그래밍 공부하기',
-                color: Colors.red,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ListView.separated(
+                    itemCount: 100,
+                    // 몇개의 값을 넣을지 지정 미리 그리지 않고 그려져야 하는 카드의 순서가 되면 그린다 메모리에 굉장히 유리
+
+                    separatorBuilder: (context, index) {
+                      // 각 아이템들 사이에 위젯을 넣어준다
+                      return SizedBox(height: 8.0);
+                    },
+                    itemBuilder: (context, index) {
+                      // 화면에 카드들이 그려질 때마다 아이템 빌더가 실행된다
+                      return ScheduleCard(
+                        startTime: 8,
+                        endTime: 9,
+                        content: '프로그래밍 공부하기. $index',
+                        color: Colors.red,
+                      );
+                    }),
               ),
             ),
           ],

@@ -2,12 +2,21 @@ import 'package:calender_scheduler/component/custom_text_field.dart';
 import 'package:calender_scheduler/const/colors.dart';
 import 'package:calender_scheduler/database/drift_database.dart';
 import 'package:calender_scheduler/model/category_color.dart';
+import 'package:drift/drift.dart' show Value;
+
+// show Value 는 drift 패키지에서 Value만 사용하겠다는 뜻이다
+// 하지 않으면 Column을 어디서 불러와야 하는 지 몰라서 오류가 난다
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:calender_scheduler/database/drift_database.dart';
 
 class ScheduleBottomSheet extends StatefulWidget {
-  const ScheduleBottomSheet({Key? key}) : super(key: key);
+  final DateTime selectedDate;
+
+  const ScheduleBottomSheet({
+    Key? key,
+    required this.selectedDate,
+  }) : super(key: key);
 
   @override
   State<ScheduleBottomSheet> createState() => _ScheduleBottomSheetState();
@@ -48,7 +57,7 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
               child: Form(
                 key: formKey,
                 // 자동으로 검증한다
-                autovalidateMode: AutovalidateMode.always,
+                // autovalidateMode: AutovalidateMode.always,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -84,7 +93,7 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
                             colors: snapshot.hasData
                                 ? snapshot.data! // 리스트로 출력
                                 : [],
-                            selectedColorId: selectedColorId!,
+                            selectedColorId: selectedColorId,
                             colorIdSetter: (int id) {
                               setState(() {
                                 selectedColorId = id;
@@ -104,20 +113,26 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
     );
   }
 
-  void onSavePressed() {
+  void onSavePressed() async {
     // formKey는 생성을 했는데 Form 위젯과 결합을 안했을 때
     if (formKey.currentState == null) {
       return;
     }
 
     if (formKey.currentState!.validate()) {
-      print('에러가 없습니다');
       formKey.currentState!.save();
 
-      print('----------------------------');
-      print('startTime: $startTime');
-      print('endTime: $endTime');
-      print('content: $content');
+      final key = await GetIt.I<LocalDatabase>().createSchedule(
+        SchedulesCompanion(
+          date: Value(widget.selectedDate),
+          startTime: Value(startTime!),
+          endTime: Value(endTime!),
+          content: Value(content!),
+          colorID: Value(selectedColorId!),
+        ),
+      );
+
+      Navigator.of(context).pop();
     } else {
       print('에러가 있습니다');
     }
@@ -182,7 +197,7 @@ typedef ColorIdSetter = void Function(int id);
 
 class _ColorPicker extends StatelessWidget {
   final List<CategoryColor> colors;
-  final int selectedColorId;
+  final int? selectedColorId;
   final ColorIdSetter colorIdSetter;
 
   const _ColorPicker({

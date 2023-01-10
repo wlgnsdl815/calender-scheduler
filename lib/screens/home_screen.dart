@@ -53,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
           isScrollControlled: true,
           // 바텀시트가 기본적으로 차지하는 공간은 화면의 반이지만 이것을 전체로 만들어준다
           builder: (_) {
-            return ScheduleBottomSheet();
+            return ScheduleBottomSheet(selectedDate: selectedDay);
           },
         );
       },

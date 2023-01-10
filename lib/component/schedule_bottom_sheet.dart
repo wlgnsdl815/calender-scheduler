@@ -38,6 +38,8 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
               ),
               child: Form(
                 key: formKey,
+                // 자동으로 검증한다
+                autovalidateMode: AutovalidateMode.always,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

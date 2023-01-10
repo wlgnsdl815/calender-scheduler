@@ -2,6 +2,7 @@ import 'package:calender_scheduler/database/drift_database.dart';
 import 'package:calender_scheduler/screens/home_screen.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 const DEFAULT_COLORS = [
@@ -30,6 +31,9 @@ void main() async {
   await initializeDateFormatting(); // intl 패키지 안에 있는 모든 걸 사용가능함 (언어변경)
 
   final database = LocalDatabase();
+
+  // GetIt 패키지로 GeIt 클래스를 사용하면 이 아래 데이터베이스를 어디서든 가져올 수 있다
+  GetIt.I.registerSingleton<LocalDatabase>(database);
 
   final colors = await database.getCategoryColors();
 

@@ -3,7 +3,9 @@ import 'package:calender_scheduler/component/schedule_bottom_sheet.dart';
 import 'package:calender_scheduler/component/schedule_card.dart';
 import 'package:calender_scheduler/component/today_banner.dart';
 import 'package:calender_scheduler/const/colors.dart';
+import 'package:calender_scheduler/database/drift_database.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -13,7 +15,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  DateTime selectedDay = DateTime(
+  DateTime selectedDay = DateTime.utc(
     DateTime.now().year,
     DateTime.now().month,
     DateTime.now().day,
@@ -38,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
               scheduleCount: 3,
             ),
             SizedBox(height: 8.0),
-            _ScheduleList(),
+            _ScheduleList(selectedDate: selectedDay),
           ],
         ),
       ),
@@ -66,7 +68,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   onDaySelected(DateTime selectedDay, DateTime focusedDay) {
     // 화면을 클릭하면 거기가 선택되게
-    print(selectedDay);
     setState(() {
       this.selectedDay = selectedDay;
       this.focusedDay = selectedDay;
@@ -75,30 +76,52 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _ScheduleList extends StatelessWidget {
-  const _ScheduleList({Key? key}) : super(key: key);
+  final DateTime selectedDate;
+
+  const _ScheduleList({Key? key, required this.selectedDate}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        child: ListView.separated(
-            itemCount: 100,
-            // 몇개의 값을 넣을지 지정 미리 그리지 않고 그려져야 하는 카드의 순서가 되면 그린다 메모리에 굉장히 유리
-
-            separatorBuilder: (context, index) {
-              // 각 아이템들 사이에 위젯을 넣어준다
-              return SizedBox(height: 8.0);
-            },
-            itemBuilder: (context, index) {
-              // 화면에 카드들이 그려질 때마다 아이템 빌더가 실행된다
-              return ScheduleCard(
-                startTime: 8,
-                endTime: 9,
-                content: '프로그래밍 공부하기. $index',
-                color: Colors.red,
+        child: StreamBuilder<List<Schedule>>(
+          stream: GetIt.I<LocalDatabase>().watchSchedules(selectedDate),
+          builder: (context, snapshot) {
+            print(snapshot.data);
+            if (!snapshot.hasData) {
+              // 데이터가 없으면 인디케이터를 리턴
+              return Container(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasData && snapshot.data!.isEmpty) {
+              // 데이터가 null은 아닌데 리스트에 아무런 값이 없을때 스케쥴이 없다는 뜻이기 때문에
+              return Center(
+                child: Text('스케줄이 없습니다'),
               );
-            }),
+            }
+
+            return ListView.separated(
+              itemCount: snapshot.data!.length,
+              // 몇개의 값을 넣을지 지정 미리 그리지 않고 그려져야 하는 카드의 순서가 되면 그린다 메모리에 굉장히 유리
+
+              separatorBuilder: (context, index) {
+                // 각 아이템들 사이에 위젯을 넣어준다
+                return SizedBox(height: 8.0);
+              },
+              itemBuilder: (context, index) {
+                final schedule = snapshot.data![index];
+
+                // 화면에 카드들이 그려질 때마다 아이템 빌더가 실행된다
+                return ScheduleCard(
+                  startTime: schedule.startTime,
+                  endTime: schedule.endTime,
+                  content: schedule.content,
+                  color: Colors.red,
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

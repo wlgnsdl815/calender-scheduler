@@ -38,6 +38,27 @@ class LocalDatabase extends _$LocalDatabase {
   Future<List<CategoryColor>> getCategoryColors() =>
       select(categoryColors).get();
 
+  // get을 하면 요청했을 때 한 번 받지만 watch를 하면 Stream으로 값이 업데이트 됐을 때
+  // 지속적으로 업데이트 된 값을 받을 수 있다
+  Stream<List<Schedule>> watchSchedules(DateTime date) =>
+
+      // query 변수에 가져올 값을 제한해서 넣었다
+      // schedules 테이블을 select하는데 tbl(테이블)의 date라는 컬럼이 함수에 넣어주는 date(우리가 선택한 날짜)와
+      // 같은 경우에만 where로 가져온다
+      // 방법 1) final query = select(schedules);
+      // query.where((tbl) => tbl.date.equals(date));
+      // return query.watch();
+
+      // select(schedules).where((tbl) => tbl.date.equals(date)).watch(); 기존코드
+      // where에는 watch()를 사용할 수 없어서 위의 코드 처럼 변수를 만들었다
+
+      // 방법 2)
+      // ..이라는 키워드는 함수가 실행이 된 대상이 리턴이 된다
+      // 그냥 함수를 select(schedules).where((tbl) => tbl.date.equals(date)) 와 같이 작성하면
+      // .이 한개라서 where가 리턴해주는 값이 select(schedules).where((tbl) => tbl.date.equals(date))의 값이지만
+      // ..을 해주는 순간 where가 실행이 된 대상 select(schedules)가 리턴이 되기 때문에 .watch()를 사용할 수 있다
+      (select(schedules)..where((tbl) => tbl.date.equals(date))).watch();
+
   // 데이터 베이스의 테이블이 바뀌면 schemaVersion도 올려주어야 한다. 초기에는 1로 둔다
   // .g.dart 파일이 생성 되고나면 아래 코드를 작성 해 주어야한다. class 이름에 자동완성 해도 뜨긴 한다
   @override

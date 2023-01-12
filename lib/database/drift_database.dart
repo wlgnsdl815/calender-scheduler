@@ -49,6 +49,11 @@ class LocalDatabase extends _$LocalDatabase {
     ]);
     // 조인을 하고 나면 where 문의 tbl 부분을 명시적으로 알려주어야 한다. 어떤 테이블인지
     query.where(schedules.date.equals(date));
+    query.orderBy([
+      // asc: ascending 오름차순
+      // desc: descending 내림차순
+      OrderingTerm.asc(schedules.startTime)
+    ]);
     return query.watch().map(
           (rows) => rows
               .map(

@@ -39,6 +39,11 @@ class LocalDatabase extends _$LocalDatabase {
   Future<List<CategoryColor>> getCategoryColors() =>
       select(categoryColors).get();
 
+  // 쿼리에서 데이터 삭제
+  // delete(tbl).go 를하면 그 테이블의 모든 값이 사라지기 때문에 id 값이 같은것만 삭제하도록 만들었다
+  Future<int> removeSchedule(int id) =>
+      (delete(schedules)..where((tbl) => tbl.id.equals(id))).go();
+
   // get을 하면 요청했을 때 한 번 받지만 watch를 하면 Stream으로 값이 업데이트 됐을 때
   // 지속적으로 업데이트 된 값을 받을 수 있다
   Stream<List<ScheduleWithColor>> watchSchedules(DateTime date) {

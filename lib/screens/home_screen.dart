@@ -112,13 +112,22 @@ class _ScheduleList extends StatelessWidget {
                 final scheduleWithColor = snapshot.data![index];
 
                 // 화면에 카드들이 그려질 때마다 아이템 빌더가 실행된다
-                return ScheduleCard(
-                  startTime: scheduleWithColor.schedule.startTime,
-                  endTime: scheduleWithColor.schedule.endTime,
-                  content: scheduleWithColor.schedule.content,
-                  color: Color(
-                    int.parse('FF${scheduleWithColor.categoryColor.hexCode}',
-                        radix: 16),
+                // Dismissible은 스와이프가 가능하게 해준다
+                return Dismissible(
+                  key: ObjectKey(scheduleWithColor.schedule.id),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (DismissDirection direction) {
+                    GetIt.I<LocalDatabase>()
+                        .removeSchedule(scheduleWithColor.schedule.id);
+                  },
+                  child: ScheduleCard(
+                    startTime: scheduleWithColor.schedule.startTime,
+                    endTime: scheduleWithColor.schedule.endTime,
+                    content: scheduleWithColor.schedule.content,
+                    color: Color(
+                      int.parse('FF${scheduleWithColor.categoryColor.hexCode}',
+                          radix: 16),
+                    ),
                   ),
                 );
               },

@@ -88,7 +88,6 @@ class _ScheduleList extends StatelessWidget {
         child: StreamBuilder<List<ScheduleWithColor>>(
           stream: GetIt.I<LocalDatabase>().watchSchedules(selectedDate),
           builder: (context, snapshot) {
-            print(snapshot.data);
             if (!snapshot.hasData) {
               // 데이터가 없으면 인디케이터를 리턴
               return Container(child: CircularProgressIndicator());
@@ -120,13 +119,29 @@ class _ScheduleList extends StatelessWidget {
                     GetIt.I<LocalDatabase>()
                         .removeSchedule(scheduleWithColor.schedule.id);
                   },
-                  child: ScheduleCard(
-                    startTime: scheduleWithColor.schedule.startTime,
-                    endTime: scheduleWithColor.schedule.endTime,
-                    content: scheduleWithColor.schedule.content,
-                    color: Color(
-                      int.parse('FF${scheduleWithColor.categoryColor.hexCode}',
-                          radix: 16),
+                  child: GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        // 바텀시트가 기본적으로 차지하는 공간은 화면의 반이지만 이것을 전체로 만들어준다
+                        builder: (_) {
+                          return ScheduleBottomSheet(
+                            selectedDate: selectedDate,
+                            scheduleId: scheduleWithColor.schedule.id,
+                          );
+                        },
+                      );
+                    },
+                    child: ScheduleCard(
+                      startTime: scheduleWithColor.schedule.startTime,
+                      endTime: scheduleWithColor.schedule.endTime,
+                      content: scheduleWithColor.schedule.content,
+                      color: Color(
+                        int.parse(
+                            'FF${scheduleWithColor.categoryColor.hexCode}',
+                            radix: 16),
+                      ),
                     ),
                   ),
                 );

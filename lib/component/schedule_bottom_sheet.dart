@@ -12,10 +12,12 @@ import 'package:calender_scheduler/database/drift_database.dart';
 
 class ScheduleBottomSheet extends StatefulWidget {
   final DateTime selectedDate;
+  final int? scheduleId;
 
   const ScheduleBottomSheet({
     Key? key,
     required this.selectedDate,
+    this.scheduleId,
   }) : super(key: key);
 
   @override
@@ -40,76 +42,107 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
         FocusScope.of(context).requestFocus(FocusNode());
         // 화면 빈 곳을 눌렀을 때 키보드 닫힘 하기 위해서는 GestureDetector로 만들어야 함
       },
-      child: SafeArea(
-        child: Container(
-          color: Colors.white,
-          height: MediaQuery.of(context).size.height / 2 + bottomInset,
-          // 키보드 가린 만큼 더해주고
-          child: Padding(
-            padding: EdgeInsets.only(bottom: bottomInset),
-            // 패딩추가
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: 8.0,
-                right: 8.0,
-                top: 16.0,
-              ),
-              child: Form(
-                key: formKey,
-                // 자동으로 검증한다
-                // autovalidateMode: AutovalidateMode.always,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _Time(
-                      onStartSaved: (String? val) {
-                        startTime = int.parse(val!);
-                      },
-                      onEndSaved: (String? val) {
-                        endTime = int.parse(val!);
-                      },
-                    ),
-                    // TextField가 올라오지 않을때는 CMD + Shift + K 누르면 올라온다
-                    SizedBox(height: 16.0),
-                    _Content(
-                      onSaved: (String? val) {
-                        content = val;
-                      },
-                    ),
-                    SizedBox(height: 16.0),
-                    FutureBuilder<List<CategoryColor>>(
-                        future: GetIt.I<LocalDatabase>().getCategoryColors(),
-                        builder: (context, snapshot) {
-                          // 데이터가 있고 아직 selectedColor가 없고, data가 최소한 하나 이상의 값이 있을 때
-                          // selectedColorId 값을 데이터에 있는 첫번째의 id 값으로 설정한다
-                          if (snapshot.hasData &&
-                              selectedColorId == null &&
-                              snapshot.data!.isNotEmpty) {
-                            selectedColorId = snapshot.data![0].id;
-                          }
+      child: FutureBuilder<Schedule>(
+          future: widget.scheduleId == null
+              ? null
+              : GetIt.I<LocalDatabase>().getScheduleId(widget.scheduleId!),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('스케줄을 불러올 수 없습니다.'),
+              );
+            }
 
-                          return _ColorPicker(
-                            // 값이 없으면 빈 리스트, 값이 있으면 snapshot.data를 매핑하여 컬러 출력
-                            colors: snapshot.hasData
-                                ? snapshot.data! // 리스트로 출력
-                                : [],
-                            selectedColorId: selectedColorId,
-                            colorIdSetter: (int id) {
-                              setState(() {
-                                selectedColorId = id;
-                              });
+            // FutureBuilder가 처음 실행됐고 로딩 중일 때
+            if (snapshot.connectionState != ConnectionState.none &&
+                !snapshot.hasData) {
+              return Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+
+            // Future가 실행이 되고 값이 있는데 단 한번도 startTime이 세탕되지 않았을 때
+            if (snapshot.hasData && startTime == null) {
+              startTime = snapshot.data!.startTime;
+              endTime = snapshot.data!.endTime;
+              content = snapshot.data!.content;
+              selectedColorId = snapshot.data!.colorID;
+            }
+            return SafeArea(
+              child: Container(
+                color: Colors.white,
+                height: MediaQuery.of(context).size.height / 2 + bottomInset,
+                // 키보드 가린 만큼 더해주고
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: bottomInset),
+                  // 패딩추가
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      left: 8.0,
+                      right: 8.0,
+                      top: 16.0,
+                    ),
+                    child: Form(
+                      key: formKey,
+                      // 자동으로 검증한다
+                      // autovalidateMode: AutovalidateMode.always,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _Time(
+                            onStartSaved: (String? val) {
+                              startTime = int.parse(val!);
                             },
-                          );
-                        }),
-                    SizedBox(height: 8.0),
-                    _SaveButton(onPressed: onSavePressed),
-                  ],
+                            onEndSaved: (String? val) {
+                              endTime = int.parse(val!);
+                            },
+                            startInitialValue: startTime?.toString() ?? '',
+                            endInitialValue: endTime?.toString() ?? '',
+                          ),
+                          // TextField가 올라오지 않을때는 CMD + Shift + K 누르면 올라온다
+                          SizedBox(height: 16.0),
+                          _Content(
+                            onSaved: (String? val) {
+                              content = val;
+                            },
+                            initialValue: content ?? '',
+                          ),
+                          SizedBox(height: 16.0),
+                          FutureBuilder<List<CategoryColor>>(
+                              future:
+                                  GetIt.I<LocalDatabase>().getCategoryColors(),
+                              builder: (context, snapshot) {
+                                // 데이터가 있고 아직 selectedColor가 없고, data가 최소한 하나 이상의 값이 있을 때
+                                // selectedColorId 값을 데이터에 있는 첫번째의 id 값으로 설정한다
+                                if (snapshot.hasData &&
+                                    selectedColorId == null &&
+                                    snapshot.data!.isNotEmpty) {
+                                  selectedColorId = snapshot.data![0].id;
+                                }
+
+                                return _ColorPicker(
+                                  // 값이 없으면 빈 리스트, 값이 있으면 snapshot.data를 매핑하여 컬러 출력
+                                  colors: snapshot.hasData
+                                      ? snapshot.data! // 리스트로 출력
+                                      : [],
+                                  selectedColorId: selectedColorId,
+                                  colorIdSetter: (int id) {
+                                    setState(() {
+                                      selectedColorId = id;
+                                    });
+                                  },
+                                );
+                              }),
+                          SizedBox(height: 8.0),
+                          _SaveButton(onPressed: onSavePressed),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
-      ),
+            );
+          }),
     );
   }
 
@@ -122,15 +155,28 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
     if (formKey.currentState!.validate()) {
       formKey.currentState!.save();
 
-      final key = await GetIt.I<LocalDatabase>().createSchedule(
-        SchedulesCompanion(
-          date: Value(widget.selectedDate),
-          startTime: Value(startTime!),
-          endTime: Value(endTime!),
-          content: Value(content!),
-          colorID: Value(selectedColorId!),
-        ),
-      );
+      if (widget.scheduleId == null) {
+        await GetIt.I<LocalDatabase>().createSchedule(
+          SchedulesCompanion(
+            date: Value(widget.selectedDate),
+            startTime: Value(startTime!),
+            endTime: Value(endTime!),
+            content: Value(content!),
+            colorID: Value(selectedColorId!),
+          ),
+        );
+      } else {
+        await GetIt.I<LocalDatabase>().updateScheduleById(
+          widget.scheduleId!,
+          SchedulesCompanion(
+            date: Value(widget.selectedDate),
+            startTime: Value(startTime!),
+            endTime: Value(endTime!),
+            content: Value(content!),
+            colorID: Value(selectedColorId!),
+          ),
+        );
+      }
 
       Navigator.of(context).pop();
     } else {
@@ -142,11 +188,15 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
 class _Time extends StatelessWidget {
   final FormFieldSetter<String> onStartSaved;
   final FormFieldSetter<String> onEndSaved;
+  final String startInitialValue;
+  final String endInitialValue;
 
   const _Time({
     Key? key,
     required this.onStartSaved,
     required this.onEndSaved,
+    required this.startInitialValue,
+    required this.endInitialValue,
   }) : super(key: key);
 
   @override
@@ -158,6 +208,7 @@ class _Time extends StatelessWidget {
             onSaved: onStartSaved,
             isTime: true,
             label: '시작 시간',
+            initialValue: startInitialValue,
           ),
         ),
         SizedBox(width: 16.0),
@@ -166,6 +217,7 @@ class _Time extends StatelessWidget {
             onSaved: onEndSaved,
             isTime: true,
             label: '마감 시간',
+            initialValue: endInitialValue,
           ),
         ),
       ],
@@ -175,10 +227,12 @@ class _Time extends StatelessWidget {
 
 class _Content extends StatelessWidget {
   final FormFieldSetter<String> onSaved;
+  final String initialValue;
 
   const _Content({
     Key? key,
     required this.onSaved,
+    required this.initialValue,
   }) : super(key: key);
 
   @override
@@ -188,6 +242,7 @@ class _Content extends StatelessWidget {
         onSaved: onSaved,
         isTime: false,
         label: '내용',
+        initialValue: initialValue,
       ),
     );
   }

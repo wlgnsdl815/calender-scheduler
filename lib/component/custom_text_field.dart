@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 class CustomTextField extends StatelessWidget {
   final String label;
+  final String initialValue;
 
   // true - 시간 // false - 내용
   final bool isTime;
@@ -14,6 +15,7 @@ class CustomTextField extends StatelessWidget {
     required this.label,
     required this.isTime,
     required this.onSaved,
+    required this.initialValue,
   }) : super(key: key);
 
   @override
@@ -66,9 +68,9 @@ class CustomTextField extends StatelessWidget {
       },
       expands: !isTime,
       cursorColor: Colors.grey,
-
       maxLines: isTime ? 1 : null,
       // 최대 줄의 갯수 null이면 줄이 무한히 내려간다
+      initialValue: initialValue,
       keyboardType: isTime ? TextInputType.number : TextInputType.multiline,
       // 시간이면 숫자입력, 시간이 아니면 여러줄로 글을 쓸 수 있는 기능인 multiline
 

@@ -27,6 +27,9 @@ part 'drift_database.g.dart';
 class LocalDatabase extends _$LocalDatabase {
   LocalDatabase() : super(_openConnection());
 
+  Future<Schedule> getScheduleId(int id) =>
+      (select(schedules)..where((tbl) => tbl.id.equals(id))).getSingle();
+
   // 쿼리 작성 - insert schedules
   Future<int> createSchedule(SchedulesCompanion data) =>
       into(schedules).insert(data);
@@ -38,6 +41,10 @@ class LocalDatabase extends _$LocalDatabase {
   // 쿼리 작성 - get colors
   Future<List<CategoryColor>> getCategoryColors() =>
       select(categoryColors).get();
+
+  // 쿼리 작성 - update
+  Future<int> updateScheduleById(int id, SchedulesCompanion data) =>
+      (update(schedules)..where((tbl) => tbl.id.equals(id))).write(data);
 
   // 쿼리에서 데이터 삭제
   // delete(tbl).go 를하면 그 테이블의 모든 값이 사라지기 때문에 id 값이 같은것만 삭제하도록 만들었다
